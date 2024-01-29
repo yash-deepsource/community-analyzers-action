@@ -1,0 +1,28 @@
+name: Scan with dart-analyze
+inputs:
+  version:
+    description: "The sdk version of dart to use"
+    default: "stable"
+  path:
+    description: "The path of the directory or file to scan"
+    default: "."
+  output-file:
+    description: "The path to the output file"
+    default: "./deepsource-report.sarif"
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@v1
+      with:
+        sdk: ${{ inputs.version }}
+
+    - name: Run Dart Analyze
+      shell: bash
+      run: dart analyze ${{ inputs.path }} > dart_analyze.txt || true
+
+    - name: Dart Analyze to SARIF
+      uses: advanced-security/dart-analyzer-sarif@main
+      with:
+        input: dart_analyze.txt
+        output: ${{ inputs.output-file }}

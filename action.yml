@@ -1,0 +1,65 @@
+name: Run community analyzer
+description: A composite action that runs either dart-analyze or kube-linter
+
+inputs:
+  ref:
+    description: "The ref of the community-analyzers-action repository"
+    required: true
+  analyzer:
+    description: "Name of the analyzer to run"
+    required: true
+  deepsource-dsn:
+    description: "The DSN of the DeepSource organization"
+    required: true
+  version:
+    description: "The version of the analyzer to use"
+    required: false
+  path:
+    description: "The path of the directory or file to scan"
+    default: "."
+    required: false
+  config:
+    description: "The path to an analyzer's config file"
+    required: false
+  output-file:
+    description: "The path to the output file"
+    default: "./deepsource-report.sarif"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout community analyzer files
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        repository: "yash-deepsource/community-analyzers-action"
+        path: "./.community-analyzers-action"
+
+    - name: Run dart-analyze
+      if: ${{ inputs.analyzer == 'dart-analyze' }}
+      uses: ./.community-analyzers-action/src/dart-analyze
+      with:
+        version: ${{ inputs.version }}
+        path: ${{ inputs.path }}
+        output-file: ${{ inputs.output-file }}
+
+    - name: Run kube-linter
+      if: ${{ inputs.analyzer == 'kube-linter' }}
+      uses: ./.community-analyzers-action/src/kube-linter
+      with:
+        path: ${{ inputs.path }}
+        config: ${{ inputs.config }}
+        output-file: ${{ inputs.output-file }}
+
+    - name: Upload SARIF report to DeepSource
+      shell: bash
+      run: |
+        # Install the CLI
+        curl https://deepsource.io/cli | sh
+
+        # Send the report to DeepSource
+        ./bin/deepsource report --analyzer ${{ inputs.analyzer }} --analyzer-type community --value-file ${{ inputs.output-file }}
+
+      env:
+        DEEPSOURCE_DSN: ${{ inputs.deepsource-dsn }}
