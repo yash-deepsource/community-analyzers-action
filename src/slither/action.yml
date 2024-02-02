@@ -1,0 +1,28 @@
+name: Scan with Slither
+
+inputs:
+  path:
+    description: "The path of the directory or file to scan"
+    default: "."
+  output-file:
+    description: "The path to the output file"
+    default: "./deepsource-report.sarif"
+  extra-data-json:
+    description: "Extra data as stringified JSON to be passed to the analyzer"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Slither
+      uses: crytic/slither-action@v0.3.1
+      with:
+        target: ${{ inputs.path }}
+        sarif: ${{ inputs.output-file }}
+        ignore-compile: ${{ fromJSON(inputs.extra-data-json).ignore-compile }}
+        node-version: ${{ fromJSON(inputs.extra-data-json).node-version }}
+        slither-args: ${{ fromJSON(inputs.extra-data-json).slither-args }}
+        slither-config: ${{ fromJSON(inputs.extra-data-json).slither-config }}
+        slither-version: ${{ fromJSON(inputs.extra-data-json).slither-version }}
+        solc-version: ${{ fromJSON(inputs.extra-data-json).solc-version }}
+      continue-on-error: true

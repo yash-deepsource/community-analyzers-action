@@ -11,19 +11,15 @@ inputs:
   deepsource-dsn:
     description: "The DSN of the DeepSource organization"
     required: true
-  version:
-    description: "The version of the analyzer to use"
-    required: false
   path:
     description: "The path of the directory or file to scan"
     default: "."
-    required: false
-  config:
-    description: "The path to an analyzer's config file"
-    required: false
   output-file:
     description: "The path to the output file"
     default: "./deepsource-report.sarif"
+  extra-data-json:
+    description: "Extra data as stringified JSON to be passed to the analyzer"
+    default: "{}"
     required: false
 
 runs:
@@ -40,17 +36,41 @@ runs:
       if: ${{ inputs.analyzer == 'dart-analyze' }}
       uses: ./.community-analyzers-action/src/dart-analyze
       with:
-        version: ${{ inputs.version }}
         path: ${{ inputs.path }}
         output-file: ${{ inputs.output-file }}
+        extra-data-json: ${{ inputs.extra-data-json }}
 
     - name: Run kube-linter
       if: ${{ inputs.analyzer == 'kube-linter' }}
       uses: ./.community-analyzers-action/src/kube-linter
       with:
         path: ${{ inputs.path }}
-        config: ${{ inputs.config }}
         output-file: ${{ inputs.output-file }}
+        extra-data-json: ${{ inputs.extra-data-json }}
+
+    - name: Run cfn-lint
+      if: ${{ inputs.analyzer == 'cfn-lint' }}
+      uses: ./.community-analyzers-action/src/cfn-lint
+      with:
+        path: ${{ inputs.path }}
+        output-file: ${{ inputs.output-file }}
+        extra-data-json: ${{ inputs.extra-data-json }}
+
+    - name: Run slither
+      if: ${{ inputs.analyzer == 'slither' }}
+      uses: ./.community-analyzers-action/src/slither
+      with:
+        path: ${{ inputs.path }}
+        output-file: ${{ inputs.output-file }}
+        extra-data-json: ${{ inputs.extra-data-json }}
+
+    - name: Run solhint
+      if: ${{ inputs.analyzer == 'solhint' }}
+      uses: ./.community-analyzers-action/src/solhint
+      with:
+        path: ${{ inputs.path }}
+        output-file: ${{ inputs.output-file }}
+        extra-data-json: ${{ inputs.extra-data-json }}
 
     - name: Upload SARIF report to DeepSource
       shell: bash

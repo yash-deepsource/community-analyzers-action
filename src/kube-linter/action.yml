@@ -1,22 +1,25 @@
 name: Scan with kube-linter
+
 inputs:
   path:
     description: "The path of the directory or file to scan"
     default: "."
-  config:
-    description: "The path to the kube-linter config file"
-    required: false
   output-file:
     description: "The path to the output file"
-    default: "./deepsource-report.sarif"
+    required: true
+  extra-data-json:
+    description: "Extra data as stringified JSON to be passed to the analyzer"
+    required: false
+
 runs:
   using: "composite"
   steps:
     - name: Scan files with kube-linter
       uses: stackrox/kube-linter-action@v1.0.4
-      id: kube-linter-action-scan
       with:
         directory: ${{ inputs.path }}
         format: sarif
         output-file: ${{ inputs.output-file }}
+        config: ${{ fromJSON(inputs.extra-data-json).config }}
+        version: ${{ fromJSON(inputs.extra-data-json).version || 'latest' }}
       continue-on-error: true
